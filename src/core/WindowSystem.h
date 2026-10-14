@@ -2,6 +2,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include<GLFW/glfw3.h>
 #include<vulkan/vulkan_raii.hpp>
+#include<vector>
 
 namespace MiniRendering {
 	class Window
@@ -17,6 +18,7 @@ namespace MiniRendering {
 		GLFWwindow* getWindow() const;
 		void windowInit(int width, int height);
 		void createSurface(const vk::raii::Instance& instance);
+		std::vector<const char*> getGLFWExtension() const;
 	private:
 		void createWindow();
 		GLFWwindow* m_window{ nullptr };

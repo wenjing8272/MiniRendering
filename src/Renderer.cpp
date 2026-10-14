@@ -22,6 +22,8 @@ namespace MiniRendering {
 	void Renderer::launchRenderer(int width, int height)
 	{
 		m_window.windowInit(width, height);
+		auto requiredExtensions = m_window.getGLFWExtension();
+		m_context.initContext(requiredExtensions);
 		while (!glfwWindowShouldClose(m_window.getWindow()))
 		{
 			glfwPollEvents();

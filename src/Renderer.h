@@ -14,7 +14,7 @@ namespace MiniRendering {
 		Renderer& operator=(Renderer&&) noexcept;
 		void launchRenderer(int width, int height);
 	private:
-		Context m_context;
 		Window m_window;
+		Context m_context;
 	};
 }

@@ -44,4 +44,10 @@ namespace MiniRendering {
 	{
 		return m_window;
 	}
+	std::vector<const char*> Window::getGLFWExtension() const
+	{
+		uint32_t glfwExtensionCount = 0;
+		auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+		return std::vector<const char*>(glfwExtensions, glfwExtensions + glfwExtensionCount);;
+	}
 }
