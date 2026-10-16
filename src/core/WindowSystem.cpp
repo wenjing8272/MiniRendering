@@ -29,6 +29,29 @@ namespace MiniRendering {
 		m_height = height;
 		createWindow();
 	}
+	GLFWwindow* Window::getWindow() const
+	{
+		return m_window;
+	}
+	vk::raii::SurfaceKHR& Window::getSurface()
+	{
+		return m_surface;
+	}
+	std::vector<const char*> Window::getGLFWExtension() const
+	{
+		uint32_t glfwExtensionCount = 0;
+		auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+		return std::vector<const char*>(glfwExtensions, glfwExtensions + glfwExtensionCount);;
+	}
+	void Window::createSurface(const vk::raii::Instance& instance)
+	{
+		VkSurfaceKHR _surface;
+		if (glfwCreateWindowSurface(*instance, m_window, nullptr, &_surface) != VK_SUCCESS)
+		{
+			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "failed to create surface");
+		}
+		m_surface = vk::raii::SurfaceKHR(instance, _surface);
+	}
 	void Window::createWindow()
 	{
 		if (!glfwInit())
@@ -37,17 +60,6 @@ namespace MiniRendering {
 		}
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-		m_window = glfwCreateWindow(m_width,m_height,"MiniRendering", nullptr, nullptr);
-	}
-
-	GLFWwindow* Window::getWindow() const
-	{
-		return m_window;
-	}
-	std::vector<const char*> Window::getGLFWExtension() const
-	{
-		uint32_t glfwExtensionCount = 0;
-		auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-		return std::vector<const char*>(glfwExtensions, glfwExtensions + glfwExtensionCount);;
+		m_window = glfwCreateWindow(m_width, m_height, "MiniRendering", nullptr, nullptr);
 	}
 }

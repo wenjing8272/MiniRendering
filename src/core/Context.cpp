@@ -1,6 +1,6 @@
 #include"Context.h"
-#include"WindowSystem.h"
 #include<Logger.h>
+#include<array>
 
 namespace MiniRendering {
 	
@@ -27,8 +27,9 @@ namespace MiniRendering {
 		}
 		return *this;
 	}
-	vk::raii::Device& Context::getDevice() { return device; }
-
+	vk::raii::Device& Context::getDevice() { return m_device; }
+	vk::raii::PhysicalDevice& Context::getPhysicalDevice() { return m_physicalDevice; }
+	vk::raii::Instance& Context::getInstance() { return m_instance; }
 	Context::~Context()
 	{
 		MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::info, "destroy vulkan context");
@@ -38,7 +39,6 @@ namespace MiniRendering {
 		this->instanceExtensions = instanceExtensions;
 		createInstance();
 		pickPhysicalDevice();
-		createDevice();
 	}
 
 	void Context::createInstance()
@@ -65,23 +65,19 @@ namespace MiniRendering {
 		{
 			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal,"Required layer not supported: " + std::string(*unsupportedLayerIt));    //终止，并打印不支持的扩展
 		}
-
-		uint32_t glfwExtensionCount = 0;
-		auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-		std::vector<const char*> requiredExtensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 		if (enableValidationLayers)
 		{
-			requiredExtensions.push_back(vk::EXTDebugUtilsExtensionName);
+			instanceExtensions.push_back(vk::EXTDebugUtilsExtensionName);
 		}
 
 		auto extensionProperties = m_context.enumerateInstanceExtensionProperties();
-		auto unsupportedExtensionIt = std::ranges::find_if(requiredExtensions,
+		auto unsupportedExtensionIt = std::ranges::find_if(instanceExtensions,
 			[&extensionProperties](auto const& requiredExtension) {
 				return std::ranges::none_of(extensionProperties,
 					[requiredExtension](auto const& extensionProperty) { return strcmp(extensionProperty.extensionName, requiredExtension) == 0; });
 			});
 
-		if (unsupportedExtensionIt != requiredExtensions.end())
+		if (unsupportedExtensionIt != instanceExtensions.end())
 		{
 			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "Required extension not supported: " + std::string(*unsupportedExtensionIt));
 		}
@@ -89,8 +85,8 @@ namespace MiniRendering {
 			.pApplicationInfo = &appInfo,
 			.enabledLayerCount = static_cast<uint32_t>(requiredLayer.size()),
 			.ppEnabledLayerNames = requiredLayer.data(),
-			.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size()),
-			.ppEnabledExtensionNames = requiredExtensions.data()
+			.enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size()),
+			.ppEnabledExtensionNames = instanceExtensions.data()
 		};
 		m_instance = vk::raii::Instance(m_context, instanceCreateInfo);
 	}
@@ -141,8 +137,37 @@ namespace MiniRendering {
 										features.get<vk::PhysicalDeviceVulkan13Features>().synchronization2;
 		return supportsVulkan13 && supportsGraphics && supportsCompute && supportsTransfer && supportsAllRequiredExtension && supportsRequiredFeatures;
 	}
-	void Context::createDevice()
+	void Context::createDevice(const MiniRendering::QueueIndex& queueIndex)
 	{
-
+		vk::StructureChain<
+			vk::PhysicalDeviceFeatures2,
+			vk::PhysicalDeviceVulkan11Features,
+			vk::PhysicalDeviceVulkan12Features,
+			vk::PhysicalDeviceVulkan13Features,
+			vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
+			featureChain = {
+				{.features = {.samplerAnisotropy = true}},
+				{.shaderDrawParameters = true},
+				{.runtimeDescriptorArray = true},
+				{.synchronization2 = true,.dynamicRendering = true},
+				{.extendedDynamicState = true}
+		};
+		constexpr float queuePriority = 1.0f; //编译期常量
+		std::array<vk::DeviceQueueCreateInfo, 4> queueInfos{
+			{
+				{.queueFamilyIndex = *queueIndex.graphicsQueueIndex,.queueCount = 1,.pQueuePriorities = &queuePriority},
+				{.queueFamilyIndex = *queueIndex.presentQueueIndex,.queueCount = 1,.pQueuePriorities = &queuePriority},
+				{.queueFamilyIndex = *queueIndex.transferQueueIndex,.queueCount = 1,.pQueuePriorities = &queuePriority},
+				{.queueFamilyIndex = *queueIndex.computeQueueIndex,.queueCount = 1,.pQueuePriorities = &queuePriority}
+			}
+		};
+		vk::DeviceCreateInfo deviceCreateInfo{
+			.pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
+			.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size()),
+			.pQueueCreateInfos = queueInfos.data(),
+			.enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtensions.size()),
+			.ppEnabledExtensionNames = requiredDeviceExtensions.data()
+		};
+		m_device = vk::raii::Device(m_physicalDevice, deviceCreateInfo);
 	}
 } // namespace MiniRendering

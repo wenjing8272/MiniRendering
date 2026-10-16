@@ -1,5 +1,6 @@
 #include"Renderer.h"
 #include<Logger.h>
+#include<QueueIndex.h>
 
 namespace MiniRendering {
 	Renderer::~Renderer()
@@ -24,6 +25,9 @@ namespace MiniRendering {
 		m_window.windowInit(width, height);
 		auto requiredExtensions = m_window.getGLFWExtension();
 		m_context.initContext(requiredExtensions);
+		m_window.createSurface(m_context.getInstance());
+		MiniRendering::QueueIndex queueIndex = MiniRendering::QueueIndex::find(m_context.getPhysicalDevice(), m_window.getSurface());
+		m_context.createDevice(queueIndex);
 		while (!glfwWindowShouldClose(m_window.getWindow()))
 		{
 			glfwPollEvents();

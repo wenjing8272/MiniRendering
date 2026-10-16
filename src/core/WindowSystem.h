@@ -16,6 +16,7 @@ namespace MiniRendering {
 		Window& operator=(Window&&) noexcept;
 
 		GLFWwindow* getWindow() const;
+		vk::raii::SurfaceKHR& getSurface();
 		void windowInit(int width, int height);
 		void createSurface(const vk::raii::Instance& instance);
 		std::vector<const char*> getGLFWExtension() const;

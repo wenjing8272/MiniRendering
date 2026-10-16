@@ -39,6 +39,7 @@ add_library(core STATIC
     src/core/Context.h
     src/core/WindowSystem.cpp 
     src/core/Context.cpp
+    src/core/QueueIndex.h
 )
 target_include_directories(core PUBLIC src/core)
 target_link_libraries(core PUBLIC commonCompileConfigure Vulkan::Vulkan ${GLFW_LIB})

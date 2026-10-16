@@ -1,6 +1,8 @@
 #pragma once
 #include<vulkan/vulkan_raii.hpp>
 #include<vector>
+#include<optional>
+#include<QueueIndex.h>
 #include"Validation.h"
 
 namespace MiniRendering {
@@ -15,12 +17,14 @@ namespace MiniRendering {
 		Context& operator=(Context&&) noexcept;
 		~Context();
 		void initContext(std::vector<const char*>& instanceExtensions);
+		void createDevice(const MiniRendering::QueueIndex& queueIndex);
+		vk::raii::Instance& getInstance();
+		vk::raii::PhysicalDevice& getPhysicalDevice();
 		vk::raii::Device& getDevice();
 	private:
 		void createInstance();
 		void pickPhysicalDevice();
 		bool isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice);
-		void createDevice();
 		std::vector<const char*> instanceExtensions;
 		vk::raii::Context m_context;
 		vk::raii::Instance m_instance{ nullptr };
@@ -28,7 +32,10 @@ namespace MiniRendering {
 		vk::raii::DebugUtilsMessengerEXT m_debugMessenger{ nullptr };
 #endif
 		vk::raii::PhysicalDevice m_physicalDevice{ nullptr };
-		vk::raii::Device device{ nullptr };
+		vk::raii::Device m_device{ nullptr };
+		vk::raii::Queue m_graphicsQueue{ nullptr };
+		vk::raii::Queue m_transferQueue{ nullptr };
+		vk::raii::Queue m_computeQueue{ nullptr };
 		std::vector<const char*> requiredDeviceExtensions = { vk::KHRSwapchainExtensionName };
 	};
 } // namespace MiniRendering
