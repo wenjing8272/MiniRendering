@@ -3,42 +3,21 @@
 #include<array>
 
 namespace MiniRendering {
-	
-	Context::Context(Context&& other) noexcept
-	{
-		m_context = std::move(other.m_context);
-		m_instance = std::move(other.m_instance);
-#ifndef NDEBUG
-		m_debugMessenger = std::move(other.m_debugMessenger);
-#endif // !defined(NDEBUG)
-		m_physicalDevice = std::move(other.m_physicalDevice);
-	}
 
-	Context& Context::operator=(Context&& other) noexcept
-	{
-		if (this != &other)
-		{
-			m_context = std::move(other.m_context);
-			m_instance = std::move(other.m_instance);
-#ifndef NDEBUG
-			m_debugMessenger = std::move(other.m_debugMessenger);
-#endif // !defined(NDEBUG)
-			m_physicalDevice = std::move(other.m_physicalDevice);
-		}
-		return *this;
-	}
 	vk::raii::Device& Context::getDevice() { return m_device; }
 	vk::raii::PhysicalDevice& Context::getPhysicalDevice() { return m_physicalDevice; }
 	vk::raii::Instance& Context::getInstance() { return m_instance; }
+	vk::raii::Queue& Context::getGraphicsQueue() { return m_graphicsQueueAndPresent; }
+	vk::raii::Queue& Context::getTransferQueue() { return m_transferQueue; }
+	vk::raii::Queue& Context::getComputeQueue() { return m_computeQueue; }
 	Context::~Context()
 	{
 		MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::info, "destroy vulkan context");
 	}
-	void Context::initContext(std::vector<const char*>& instanceExtensions)
+	void Context::initInstance(std::vector<const char*>& instanceExtensions)
 	{
 		this->instanceExtensions = instanceExtensions;
 		createInstance();
-		pickPhysicalDevice();
 	}
 
 	void Context::createInstance()
@@ -48,7 +27,7 @@ namespace MiniRendering {
 			.applicationVersion = VK_MAKE_VERSION(1, 0, 0),
 			.pEngineName = "MiniRendering",
 			.engineVersion = VK_MAKE_VERSION(1, 0, 0),
-			.apiVersion = vk::ApiVersion14
+			.apiVersion = vk::ApiVersion13
 		};
 		std::vector<const char*>requiredLayer;
 		if (enableValidationLayers)
@@ -90,24 +69,29 @@ namespace MiniRendering {
 		};
 		m_instance = vk::raii::Instance(m_context, instanceCreateInfo);
 	}
-	void Context::pickPhysicalDevice()
+	void Context::pickPhysicalDevice(const vk::raii::SurfaceKHR& surface)
 	{
 		auto physicalDevices = m_instance.enumeratePhysicalDevices();
-		auto deviceIter = std::ranges::find_if(physicalDevices, [&](const auto& pd) {return isDeviceSuitable(pd);});
+		auto deviceIter = std::ranges::find_if(physicalDevices, [&](const auto& pd) {return isDeviceSuitable(pd,surface);});
 		if (deviceIter == physicalDevices.end())
 		{
 			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "failed to find suitable GPU");
 		}
 		m_physicalDevice = std::move(*deviceIter);
 	}
-	bool Context::isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice)
+	bool Context::isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface)
 	{
 		bool supportsVulkan13 = physicalDevice.getProperties().apiVersion >= vk::ApiVersion13;
 		auto queueFamilies = physicalDevice.getQueueFamilyProperties();
-		bool supportsGraphics = std::ranges::any_of(queueFamilies,
-			[](const auto& queueFamily) {
-				return (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics) != vk::QueueFlags(0);
-			});
+		bool supportsGraphicsAndPresent = false;
+		for (uint32_t i = 0;i < queueFamilies.size();++i)
+		{
+			if ((queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) && physicalDevice.getSurfaceSupportKHR(i, surface))
+			{
+				supportsGraphicsAndPresent = true;
+				break;
+			}
+		}
 		bool supportsCompute = std::ranges::any_of(queueFamilies,
 			[](const auto& queueFamily) {
 				return (queueFamily.queueFlags & vk::QueueFlagBits::eCompute) != vk::QueueFlags(0);
@@ -135,7 +119,7 @@ namespace MiniRendering {
 										features.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
 										features.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
 										features.get<vk::PhysicalDeviceVulkan13Features>().synchronization2;
-		return supportsVulkan13 && supportsGraphics && supportsCompute && supportsTransfer && supportsAllRequiredExtension && supportsRequiredFeatures;
+		return supportsVulkan13 && supportsGraphicsAndPresent && supportsCompute && supportsTransfer && supportsAllRequiredExtension && supportsRequiredFeatures;
 	}
 	void Context::createDevice(const MiniRendering::QueueIndex& queueIndex)
 	{
@@ -152,22 +136,33 @@ namespace MiniRendering {
 				{.synchronization2 = true,.dynamicRendering = true},
 				{.extendedDynamicState = true}
 		};
-		constexpr float queuePriority = 1.0f; //编译期常量
-		std::array<vk::DeviceQueueCreateInfo, 4> queueInfos{
-			{
-				{.queueFamilyIndex = *queueIndex.graphicsQueueIndex,.queueCount = 1,.pQueuePriorities = &queuePriority},
-				{.queueFamilyIndex = *queueIndex.presentQueueIndex,.queueCount = 1,.pQueuePriorities = &queuePriority},
-				{.queueFamilyIndex = *queueIndex.transferQueueIndex,.queueCount = 1,.pQueuePriorities = &queuePriority},
-				{.queueFamilyIndex = *queueIndex.computeQueueIndex,.queueCount = 1,.pQueuePriorities = &queuePriority}
-			}
-		};
+		if (!queueIndex.isComplete())MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "no have queue index");
+		auto counts = queueIndex.queueFamilyCounts();
+		std::vector<std::vector<float>> priorities;     //每一个queue都需要一个优先级，如果一个队列族一个用来两个队列就需要两个优先级 创建一个二维数组，比如一个{0,0}{0,1}{1,0},
+		priorities.reserve(counts.size());                      //前两个在同一个队列族里面，queueCount = 2，需要两个独立的优先级
+		std::vector<vk::DeviceQueueCreateInfo> queueInfos;
+		queueInfos.reserve(counts.size());
+		for (const auto& [family, count] : counts)
+		{
+			priorities.emplace_back(count, 1.0f);     //创建count个1.0f优先级
+			queueInfos.emplace_back(
+				vk::DeviceQueueCreateInfo{
+					.queueFamilyIndex = family,
+					.queueCount = count,
+					.pQueuePriorities = priorities.back().data()
+				}
+			);
+		}
 		vk::DeviceCreateInfo deviceCreateInfo{
-			.pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
+			.pNext = featureChain.get<vk::PhysicalDeviceFeatures2>(),
 			.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size()),
 			.pQueueCreateInfos = queueInfos.data(),
 			.enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtensions.size()),
 			.ppEnabledExtensionNames = requiredDeviceExtensions.data()
 		};
 		m_device = vk::raii::Device(m_physicalDevice, deviceCreateInfo);
+		m_graphicsQueueAndPresent = vk::raii::Queue(m_device, queueIndex.graphicsAndPresent->familyIndex, queueIndex.graphicsAndPresent->queueIndex);
+		m_transferQueue = vk::raii::Queue(m_device, queueIndex.transfer->familyIndex, queueIndex.transfer->queueIndex);
+		m_computeQueue = vk::raii::Queue(m_device, queueIndex.compute->familyIndex, queueIndex.compute->queueIndex);
 	}
 } // namespace MiniRendering

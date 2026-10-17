@@ -12,8 +12,6 @@ namespace MiniRendering {
 		~Window();
 		Window(const Window&) = delete;
 		Window& operator=(const Window&) = delete;
-		Window(Window&&) noexcept;
-		Window& operator=(Window&&) noexcept;
 
 		GLFWwindow* getWindow() const;
 		vk::raii::SurfaceKHR& getSurface();

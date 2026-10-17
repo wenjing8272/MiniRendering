@@ -8,21 +8,6 @@ namespace MiniRendering {
 		glfwDestroyWindow(m_window);
 		glfwTerminate();
 	}
-	Window::Window(Window&& other) noexcept
-	{
-		m_window = other.m_window;
-		other.m_window = nullptr;
-	}
-	Window& Window::operator=(Window&& other) noexcept
-	{
-		if (this != &other)
-		{
-			glfwDestroyWindow(m_window);
-			m_window = other.m_window;
-			other.m_window = nullptr;
-		}
-		return *this;
-	}
 	void Window::windowInit(int width, int height)
 	{
 		m_width = width;
@@ -61,5 +46,9 @@ namespace MiniRendering {
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		m_window = glfwCreateWindow(m_width, m_height, "MiniRendering", nullptr, nullptr);
+		if (!m_window)
+		{
+			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "failed to create glfw window");
+		}
 	}
 }

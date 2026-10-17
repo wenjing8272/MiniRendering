@@ -10,8 +10,6 @@ namespace MiniRendering {
 		~Renderer();
 		Renderer(const Renderer&) = delete;
 		Renderer& operator=(const Renderer&) = delete;
-		Renderer(Renderer&&) noexcept;
-		Renderer& operator=(Renderer&&) noexcept;
 		void launchRenderer(int width, int height);
 	private:
 		Context m_context;
