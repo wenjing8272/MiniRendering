@@ -3,8 +3,8 @@
 #include<string>
 #include<map>
 #include<algorithm>
-#include<Logger.h>
 #include<vulkan/vulkan_raii.hpp>
+#include<Logger.h>
 
 namespace MiniRendering {
 	struct QueueRole {

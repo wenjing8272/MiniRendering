@@ -31,19 +31,25 @@ target_include_directories(stb PUBLIC third_party/stb)
 add_library(tinygltf STATIC third_party/tinyglTFloader/tiny_gltf.cpp)
 target_include_directories(tinygltf PUBLIC third_party/tinyglTFloader)
 target_link_libraries(tinygltf PUBLIC commonCompileConfigure stb)
-# GLFW（窗口 + surface）
-set(GLFW_LIB "E:/GLFW/glfw-3.5.1.bin.WIN64/lib-vc2022/glfw3dll.lib")
 
+# VAM
+add_library(VMA STATIC third_party/VMA/vk_mem_alloc.cpp)
+target_include_directories(VMA PUBLIC third_party/VMA)
+target_link_libraries(VMA PUBLIC commonCompileConfigure Vulkan::Vulkan)
+# GLFW（窗口 + surface）
+set(GLFW_LIB "${CMAKE_CURRENT_SOURCE_DIR}/third_party/GLFW/glfw-3.5.1.bin.WIN64/lib-vc2022/glfw3.lib")
 # core源代码添加到此项目的可执行文件。
 add_library(core STATIC 
-    src/core/Context.h
+    src/core/Context.cpp
     src/core/WindowSystem.cpp 
     src/core/Context.cpp
     src/core/QueueIndex.h
+    src/core/Debug.cpp
 )
 target_include_directories(core PUBLIC src/core)
-target_link_libraries(core PUBLIC commonCompileConfigure Vulkan::Vulkan ${GLFW_LIB})
-target_include_directories(core PUBLIC "E:/GLFW/glfw-3.5.1.bin.WIN64/include")
+target_link_libraries(core PUBLIC commonCompileConfigure Vulkan::Vulkan ${GLFW_LIB} VMA)
+target_include_directories(core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third_party/GLFW/glfw-3.5.1.bin.WIN64/include")
+
 
 # resources源代码
 add_library(resources STATIC
@@ -94,10 +100,9 @@ target_link_libraries(MiniRendering PRIVATE render scene utils)
 # 运行时需要 glfw3.dll，拷贝到输出目录
 add_custom_command(TARGET MiniRendering POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "E:/GLFW/glfw-3.5.1.bin.WIN64/lib-vc2022/glfw3.dll"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/GLFW/glfw-3.5.1.bin.WIN64/lib-vc2022/glfw3.dll"
         $<TARGET_FILE_DIR:MiniRendering>
 )
-
 if(MSVC)
     target_compile_options(MiniRendering PRIVATE /utf-8)
 endif()

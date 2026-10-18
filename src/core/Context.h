@@ -1,8 +1,10 @@
 #pragma once
 #include<vulkan/vulkan_raii.hpp>
+#include<vk_mem_alloc.h>
 #include<vector>
 #include<optional>
-#include<QueueIndex.h>
+#include"Debug.h"
+#include"QueueIndex.h"
 #include"Validation.h"
 
 namespace MiniRendering {
@@ -19,6 +21,7 @@ namespace MiniRendering {
 		void pickPhysicalDevice(const vk::raii::SurfaceKHR& surface);
 		vk::raii::Instance& getInstance();
 		vk::raii::PhysicalDevice& getPhysicalDevice();
+		VmaAllocator& getAllocator();
 		vk::raii::Device& getDevice();
 		vk::raii::Queue& getGraphicsQueue();
 		vk::raii::Queue& getTransferQueue();
@@ -30,9 +33,10 @@ namespace MiniRendering {
 		vk::raii::Context m_context;
 		vk::raii::Instance m_instance{ nullptr };
 #ifndef NDEBUG
-		vk::raii::DebugUtilsMessengerEXT m_debugMessenger{ nullptr };
-#endif
+		Debug m_debug;       //将Debug的声明放在这里，通过raii的声明顺序让Debug在Device析构之后析构，能够捕获更多的bug信息
+#endif 
 		vk::raii::PhysicalDevice m_physicalDevice{ nullptr };
+		VmaAllocator m_allocator = VK_NULL_HANDLE;
 		vk::raii::Device m_device{ nullptr };
 		vk::raii::Queue m_graphicsQueueAndPresent{ nullptr };
 		vk::raii::Queue m_transferQueue{ nullptr };

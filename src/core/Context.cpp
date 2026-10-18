@@ -4,8 +4,9 @@
 
 namespace MiniRendering {
 
+	vk::raii::PhysicalDevice& Context::getPhysicalDevice(){ return m_physicalDevice; }
+	VmaAllocator& Context::getAllocator() { return m_allocator; }
 	vk::raii::Device& Context::getDevice() { return m_device; }
-	vk::raii::PhysicalDevice& Context::getPhysicalDevice() { return m_physicalDevice; }
 	vk::raii::Instance& Context::getInstance() { return m_instance; }
 	vk::raii::Queue& Context::getGraphicsQueue() { return m_graphicsQueueAndPresent; }
 	vk::raii::Queue& Context::getTransferQueue() { return m_transferQueue; }
@@ -13,6 +14,7 @@ namespace MiniRendering {
 	Context::~Context()
 	{
 		MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::info, "destroy vulkan context");
+		if (m_allocator != VK_NULL_HANDLE)vmaDestroyAllocator(m_allocator);
 	}
 	void Context::initInstance(std::vector<const char*>& instanceExtensions)
 	{
@@ -68,6 +70,9 @@ namespace MiniRendering {
 			.ppEnabledExtensionNames = instanceExtensions.data()
 		};
 		m_instance = vk::raii::Instance(m_context, instanceCreateInfo);
+#ifndef NDEBUG
+		m_debug.setupDebugMessenger(m_instance);
+#endif 
 	}
 	void Context::pickPhysicalDevice(const vk::raii::SurfaceKHR& surface)
 	{
@@ -164,5 +169,16 @@ namespace MiniRendering {
 		m_graphicsQueueAndPresent = vk::raii::Queue(m_device, queueIndex.graphicsAndPresent->familyIndex, queueIndex.graphicsAndPresent->queueIndex);
 		m_transferQueue = vk::raii::Queue(m_device, queueIndex.transfer->familyIndex, queueIndex.transfer->queueIndex);
 		m_computeQueue = vk::raii::Queue(m_device, queueIndex.compute->familyIndex, queueIndex.compute->queueIndex);
+		//创建VamAllocator
+		VmaAllocatorCreateInfo allocatorInfo{
+			.physicalDevice = *m_physicalDevice,
+			.device = *m_device,
+			.instance = *m_instance,
+			.vulkanApiVersion = vk::ApiVersion13
+		};
+		if (vmaCreateAllocator(&allocatorInfo, &m_allocator) != VK_SUCCESS)
+		{
+			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "failed to create vmaAllocator");
+		}
 	}
 } // namespace MiniRendering
