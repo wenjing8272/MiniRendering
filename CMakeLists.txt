@@ -49,8 +49,6 @@ add_library(core STATIC
 target_include_directories(core PUBLIC src/core)
 target_link_libraries(core PUBLIC commonCompileConfigure Vulkan::Vulkan ${GLFW_LIB} VMA)
 target_include_directories(core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third_party/GLFW/glfw-3.5.1.bin.WIN64/include")
-
-
 # resources源代码
 add_library(resources STATIC
     src/resources/Buffer.cpp

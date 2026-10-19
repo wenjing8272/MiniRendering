@@ -1,6 +1,7 @@
 #pragma once
 #include"core/Context.h"
 #include"core/WindowSystem.h"
+#include"render/SwapChain.h"
 
 namespace MiniRendering {
 	class Renderer
@@ -14,5 +15,6 @@ namespace MiniRendering {
 	private:
 		Context m_context;
 		Window m_window;
+		SwapChain m_swapChain;
 	};
 }

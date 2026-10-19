@@ -13,7 +13,7 @@ namespace MiniRendering {
 	vk::raii::Queue& Context::getComputeQueue() { return m_computeQueue; }
 	Context::~Context()
 	{
-		MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::info, "destroy vulkan context");
+		MR_LOG_INFO("destroy vulkan context");
 		if (m_allocator != VK_NULL_HANDLE)vmaDestroyAllocator(m_allocator);
 	}
 	void Context::initInstance(std::vector<const char*>& instanceExtensions)
@@ -44,7 +44,7 @@ namespace MiniRendering {
 			});
 		if (unsupportedLayerIt != requiredLayer.end())
 		{
-			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal,"Required layer not supported: " + std::string(*unsupportedLayerIt));    //终止，并打印不支持的扩展
+			MR_LOG_FATAL("Required layer not supported: {}", *unsupportedLayerIt);    //终止，并打印不支持的扩展
 		}
 		if (enableValidationLayers)
 		{
@@ -60,7 +60,7 @@ namespace MiniRendering {
 
 		if (unsupportedExtensionIt != instanceExtensions.end())
 		{
-			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "Required extension not supported: " + std::string(*unsupportedExtensionIt));
+			MR_LOG_FATAL("Required extension not supported: {}" ,*unsupportedExtensionIt);
 		}
 		vk::InstanceCreateInfo instanceCreateInfo{
 			.pApplicationInfo = &appInfo,
@@ -80,7 +80,7 @@ namespace MiniRendering {
 		auto deviceIter = std::ranges::find_if(physicalDevices, [&](const auto& pd) {return isDeviceSuitable(pd,surface);});
 		if (deviceIter == physicalDevices.end())
 		{
-			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "failed to find suitable GPU");
+			MR_LOG_FATAL("failed to find suitable GPU");
 		}
 		m_physicalDevice = std::move(*deviceIter);
 	}
@@ -141,7 +141,7 @@ namespace MiniRendering {
 				{.synchronization2 = true,.dynamicRendering = true},
 				{.extendedDynamicState = true}
 		};
-		if (!queueIndex.isComplete())MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "no have queue index");
+		if (!queueIndex.isComplete())MR_LOG_FATAL("no have queue index");
 		auto counts = queueIndex.queueFamilyCounts();
 		std::vector<std::vector<float>> priorities;     //每一个queue都需要一个优先级，如果一个队列族一个用来两个队列就需要两个优先级 创建一个二维数组，比如一个{0,0}{0,1}{1,0},
 		priorities.reserve(counts.size());                      //前两个在同一个队列族里面，queueCount = 2，需要两个独立的优先级
@@ -178,7 +178,7 @@ namespace MiniRendering {
 		};
 		if (vmaCreateAllocator(&allocatorInfo, &m_allocator) != VK_SUCCESS)
 		{
-			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "failed to create vmaAllocator");
+			MR_LOG_FATAL("failed to create vmaAllocator");
 		}
 	}
 } // namespace MiniRendering

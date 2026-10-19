@@ -4,7 +4,7 @@
 namespace MiniRendering {
 	Window::~Window()
 	{
-		MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::info, "destroy window");
+		MR_LOG_INFO("destroy window");
 		glfwDestroyWindow(m_window);
 		glfwTerminate();
 	}
@@ -33,7 +33,7 @@ namespace MiniRendering {
 		VkSurfaceKHR _surface;
 		if (glfwCreateWindowSurface(*instance, m_window, nullptr, &_surface) != VK_SUCCESS)
 		{
-			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "failed to create surface");
+			MR_LOG_FATAL("failed to create surface");
 		}
 		m_surface = vk::raii::SurfaceKHR(instance, _surface);
 	}
@@ -41,14 +41,16 @@ namespace MiniRendering {
 	{
 		if (!glfwInit())
 		{
-			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "failed to init glfw");
+			MR_LOG_FATAL("failed to init glfw");
 		}
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		m_window = glfwCreateWindow(m_width, m_height, "MiniRendering", nullptr, nullptr);
 		if (!m_window)
 		{
-			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "failed to create glfw window");
+			MR_LOG_FATAL("failed to create glfw window");
 		}
+		glfwSetWindowUserPointer(m_window, this);
+		glfwSetFramebufferSizeCallback(m_window, framebufferResizedCallback);
 	}
 }

@@ -1,21 +1,29 @@
 ﻿// MiniRendering.cpp: 定义应用程序的入口点。
 //
-
 #include"src/Renderer.h"
 #include"UTILS/Logger.h"
 
+struct LogGuard
+{
+    explicit LogGuard(const MiniRendering::LogOptions& options)
+    {
+        MiniRendering::LogSystem::init(options);
+    }
+    ~LogGuard()
+    {
+        MiniRendering::LogSystem::shutdown();
+    }
+};
+
 int main()
 {
-    // 格式：时间 + 彩色级别 + 文件:行号 + 消息
-	MiniRendering::LogSystem LogSystem;
+    MiniRendering::LogOptions options;
+    LogGuard logGuard(options);
 
-    // 可选：写文件（崩溃了能翻日志）
-    // auto fileLog = spdlog::basic_logger_mt("file", "logs/renderer.log");
-    // spdlog::set_default_logger(fileLog);
+    MR_LOG_INFO("load rendering engine");
 
-    MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::info, "load rendering engine");
-	MiniRendering::Renderer renderer;
-	renderer.launchRenderer(1920, 1080);
+    MiniRendering::Renderer renderer;
+    renderer.launchRenderer(1920, 1080);
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;   // renderer 先析构，守卫最后析构
 }

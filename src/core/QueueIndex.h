@@ -50,9 +50,8 @@ namespace MiniRendering {
 			for (const auto& [family, count] : nextLocalIndex)
 			{
 				if (count > queueProperties[family].queueCount) {
-					MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, 
-						"queue family: " + std::to_string(family) + "need queue counts: " + std::to_string(count) + "but queue family only have queue count: " + std::to_string(queueProperties[family].queueCount)
-						);
+					MR_LOG_FATAL("queue family: {} need queue counts: {} but queue family only have queue count: {}",
+						family, count, queueProperties[family].queueCount);
 				}
 			}
 			return queueIndex;
@@ -80,7 +79,7 @@ namespace MiniRendering {
 			}
 			if (!best)
 			{
-				MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, std::string("no queue family supports") + name);
+				MR_LOG_FATAL("no queue family supports:{}" ,name);
 			}
 			return *best;
 		}
@@ -94,7 +93,7 @@ namespace MiniRendering {
 					return i;
 				}
 			}
-			MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::fatal, "fail to find present and graphics queue");
+			MR_LOG_FATAL("fail to find present and graphics queue");
 			return 0;
 		}
 	};

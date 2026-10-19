@@ -20,10 +20,15 @@ namespace MiniRendering {
 		std::vector<const char*> getGLFWExtension() const;
 	private:
 		void createWindow();
+		static void framebufferResizedCallback(GLFWwindow* window, int width, int height)
+		{
+			auto app = static_cast<Window*>(glfwGetWindowUserPointer(window));
+			if (app != nullptr)app->framebufferResized = true;
+		}
 		GLFWwindow* m_window{ nullptr };
 		int m_width{ 0 };
 		int m_height{ 0 };
-
 		vk::raii::SurfaceKHR m_surface{ nullptr };
+		bool framebufferResized = false;
 	};
 }

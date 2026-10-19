@@ -24,11 +24,11 @@ namespace MiniRendering {
 		{
 			if (severity == vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
 			{
-				MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::error, std::string("IDName: ") + pCallbackData->pMessageIdName + "Message: " + pCallbackData->pMessage);
+				MR_LOG_ERROR("IDName: {} Message: {}", pCallbackData->pMessageIdName, pCallbackData->pMessage);
 			}
 			else
 			{
-				MiniRendering::LogSystem::log(MiniRendering::LogSystem::LogLevel::warn, std::string("IDName: ") + pCallbackData->pMessageIdName + "Message: " +  pCallbackData->pMessage);
+				MR_LOG_ERROR("IDName: {} Message: {}", pCallbackData->pMessageIdName, pCallbackData->pMessage);
 			}
 			return vk::False;
 		}
