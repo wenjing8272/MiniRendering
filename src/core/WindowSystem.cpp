@@ -26,7 +26,13 @@ namespace MiniRendering {
 	{
 		uint32_t glfwExtensionCount = 0;
 		auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-		return std::vector<const char*>(glfwExtensions, glfwExtensions + glfwExtensionCount);;
+		return std::vector<const char*>(glfwExtensions, glfwExtensions + glfwExtensionCount);
+	}
+	vk::Extent2D Window::getFramebufferExtent()const
+	{
+		int width, height;
+		glfwGetFramebufferSize(m_window, &width, &height);
+		return { static_cast<uint32_t>(width),static_cast<uint32_t>(height) };
 	}
 	void Window::createSurface(const vk::raii::Instance& instance)
 	{

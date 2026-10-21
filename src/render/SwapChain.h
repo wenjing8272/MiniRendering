@@ -1,7 +1,7 @@
 #pragma once
 #include<vulkan/vulkan_raii.hpp>
 #include<vector>
-#include<GLFW/glfw3.h>
+#include<DeviceContext.h>
 
 namespace MiniRendering {
 
@@ -11,12 +11,17 @@ namespace MiniRendering {
 		~SwapChain();
 		SwapChain(const SwapChain& other) = delete;
 		SwapChain& operator=(const SwapChain& other) = delete;
-		void createSwapChain(const vk::raii::PhysicalDevice& physicalDevice,const vk::raii::Device& device,const vk::raii::SurfaceKHR& surface, GLFWwindow* window);
+		vk::Extent2D& getSwapChainExtent();
+		vk::SurfaceFormatKHR& getSwapChainSurfaceFormat();
+		std::vector<vk::Image>& getSwapChainImages();
+		std::vector<vk::raii::ImageView>& getSwapChainImageViews();
+		void createSwapChain(const DeviceContext& deviceContext,const vk::raii::SurfaceKHR& surface, vk::Extent2D extent);
 	private:
-		vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities,GLFWwindow* window);
+		vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities,vk::Extent2D extent);
 		uint32_t swapMinImageCount(const vk::SurfaceCapabilitiesKHR& capabilities);
 		vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
 		vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availableMode);
+		void createSwapChainViews(const vk::raii::Device& device);
 		vk::raii::SwapchainKHR m_swapChain{ nullptr };
 		vk::Extent2D m_swapChainExtent;
 		vk::SurfaceFormatKHR m_swapChainSurfaceFormat;

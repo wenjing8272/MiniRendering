@@ -11,6 +11,7 @@ namespace MiniRendering {
 	vk::raii::Queue& Context::getGraphicsQueue() { return m_graphicsQueueAndPresent; }
 	vk::raii::Queue& Context::getTransferQueue() { return m_transferQueue; }
 	vk::raii::Queue& Context::getComputeQueue() { return m_computeQueue; }
+	MiniRendering::DeviceContext Context::deviceContext() { return { m_physicalDevice,m_device,m_allocator,m_graphicsQueueAndPresent,m_transferQueue,m_computeQueue }; }
 	Context::~Context()
 	{
 		MR_LOG_INFO("destroy vulkan context");

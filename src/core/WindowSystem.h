@@ -18,6 +18,7 @@ namespace MiniRendering {
 		void windowInit(int width, int height);
 		void createSurface(const vk::raii::Instance& instance);
 		std::vector<const char*> getGLFWExtension() const;
+		vk::Extent2D getFramebufferExtent()const;
 	private:
 		void createWindow();
 		static void framebufferResizedCallback(GLFWwindow* window, int width, int height)

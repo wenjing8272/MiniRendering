@@ -6,6 +6,7 @@
 #include"Debug.h"
 #include"QueueIndex.h"
 #include"Validation.h"
+#include"DeviceContext.h"
 
 namespace MiniRendering {
 
@@ -26,6 +27,7 @@ namespace MiniRendering {
 		vk::raii::Queue& getGraphicsQueue();
 		vk::raii::Queue& getTransferQueue();
 		vk::raii::Queue& getComputeQueue();
+		MiniRendering::DeviceContext deviceContext();
 	private:
 		void createInstance();
 		bool isDeviceSuitable(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::SurfaceKHR& surface);

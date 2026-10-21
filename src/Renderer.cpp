@@ -16,7 +16,8 @@ namespace MiniRendering {
 		m_context.pickPhysicalDevice(m_window.getSurface());
 		MiniRendering::QueueIndex queueIndex = MiniRendering::QueueIndex::find(m_context.getPhysicalDevice(), m_window.getSurface());
 		m_context.createDevice(queueIndex);
-		m_swapChain.createSwapChain(m_context.getPhysicalDevice(), m_context.getDevice(), m_window.getSurface(),m_window.getWindow());
+		m_swapChain.createSwapChain(m_context.deviceContext(),m_window.getSurface(),m_window.getFramebufferExtent());
+		m_command.createCommandPool(m_context.deviceContext(), queueIndex);
 		while (!glfwWindowShouldClose(m_window.getWindow()))
 		{
 			glfwPollEvents();

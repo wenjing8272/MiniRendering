@@ -6,17 +6,19 @@ namespace MiniRendering {
 	{
 		MR_LOG_INFO("destory swapchain");
 	}
-	vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities,GLFWwindow* window)
+	vk::Extent2D& SwapChain::getSwapChainExtent() { return m_swapChainExtent; }
+	vk::SurfaceFormatKHR& SwapChain::getSwapChainSurfaceFormat() { return m_swapChainSurfaceFormat; }
+	std::vector<vk::Image>& SwapChain::getSwapChainImages() { return m_swapChainImages; }
+	std::vector<vk::raii::ImageView>& SwapChain::getSwapChainImageViews() { return m_swapChainImageViews; }
+	vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities,vk::Extent2D extent)
 	{
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 		{
 			return capabilities.currentExtent;
 		}
-		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
 		return {
-			std::clamp<uint32_t>(width,capabilities.minImageExtent.width,capabilities.maxImageExtent.width),
-			std::clamp<uint32_t>(height,capabilities.minImageExtent.height,capabilities.maxImageExtent.height) };
+			std::clamp<uint32_t>(extent.width,capabilities.minImageExtent.width,capabilities.maxImageExtent.width),
+			std::clamp<uint32_t>(extent.height,capabilities.minImageExtent.height,capabilities.maxImageExtent.height)};
 	}
 	uint32_t SwapChain::swapMinImageCount(const vk::SurfaceCapabilitiesKHR& capabilities)
 	{
@@ -50,17 +52,17 @@ namespace MiniRendering {
 			vk::PresentModeKHR::eMailbox :
 			vk::PresentModeKHR::eFifo;
 	}
-	void SwapChain::createSwapChain(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device, const vk::raii::SurfaceKHR& surface,GLFWwindow* window)
+	void SwapChain::createSwapChain(const DeviceContext& deviceContext, const vk::raii::SurfaceKHR& surface,vk::Extent2D extent)
 	{
 		MR_LOG_INFO("create swap chain");
-		auto surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(*surface);
-		m_swapChainExtent = chooseSwapExtent(surfaceCapabilities,window);                    //选择适合的交换链大小
+		auto surfaceCapabilities = deviceContext.physicalDevice.getSurfaceCapabilitiesKHR(*surface);
+		m_swapChainExtent = chooseSwapExtent(surfaceCapabilities,extent);                    //选择适合的交换链大小
 		auto minImageCount = swapMinImageCount(surfaceCapabilities);                   
 
-		auto availableFormats = physicalDevice.getSurfaceFormatsKHR(*surface);   
+		auto availableFormats = deviceContext.physicalDevice.getSurfaceFormatsKHR(*surface);
 		m_swapChainSurfaceFormat = chooseSwapSurfaceFormat(availableFormats);       //选择合适的交换链格式
 
-		auto availablePresentModes = physicalDevice.getSurfacePresentModesKHR(*surface);
+		auto availablePresentModes = deviceContext.physicalDevice.getSurfacePresentModesKHR(*surface);
 		auto presentMode = chooseSwapPresentMode(availablePresentModes);                  //选择合适的显示模式
 		vk::SwapchainCreateInfoKHR swapChainCreateInfo{
 			.surface = *surface,
@@ -76,7 +78,32 @@ namespace MiniRendering {
 			.presentMode = presentMode,
 			.clipped = true
 		};
-		m_swapChain = vk::raii::SwapchainKHR(device, swapChainCreateInfo);
+		m_swapChain = vk::raii::SwapchainKHR(deviceContext.device, swapChainCreateInfo);
 		m_swapChainImages = m_swapChain.getImages();  //取出交换链的图片
+		createSwapChainViews(deviceContext.device);
+	}
+	void SwapChain::createSwapChainViews(const vk::raii::Device& device)
+	{
+		if (!m_swapChainImageViews.empty())
+		{
+			MR_LOG_FATAL("swapChainImageView not empty");
+		}
+		m_swapChainImageViews.reserve(m_swapChainImages.size());
+		for (const auto& image : m_swapChainImages)
+		{
+			vk::ImageViewCreateInfo viewInfo{
+				.image = image,
+				.viewType = vk::ImageViewType::e2D,
+				.format = m_swapChainSurfaceFormat.format,
+				.subresourceRange{
+					.aspectMask = vk::ImageAspectFlagBits::eColor,
+					.baseMipLevel = 0,
+					.levelCount = 1,
+					.baseArrayLayer = 0,
+					.layerCount = 1
+				}
+			};
+			m_swapChainImageViews.emplace_back(vk::raii::ImageView(device, viewInfo));
+		}
 	}
 }
