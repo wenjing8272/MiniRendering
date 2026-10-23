@@ -46,6 +46,7 @@ add_library(core STATIC
     src/core/QueueIndex.h
     src/core/Debug.cpp
     src/core/DeviceContext.h
+    src/core/MR_Global.h
 )
 target_include_directories(core PUBLIC src/core)
 target_link_libraries(core PUBLIC commonCompileConfigure Vulkan::Vulkan ${GLFW_LIB} VMA)
@@ -69,6 +70,8 @@ target_link_libraries(scene PUBLIC resources tinygltf)
 add_library(render STATIC
     src/render/SwapChain.cpp
     src/render/MR_Command.cpp
+    src/render/MainDraw.cpp
+    src/render/PipelineLib.cpp
 )
 target_include_directories(render PUBLIC src/render)
 target_link_libraries(render PUBLIC resources)

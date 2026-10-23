@@ -10,6 +10,8 @@ namespace MiniRendering {
 	vk::SurfaceFormatKHR& SwapChain::getSwapChainSurfaceFormat() { return m_swapChainSurfaceFormat; }
 	std::vector<vk::Image>& SwapChain::getSwapChainImages() { return m_swapChainImages; }
 	std::vector<vk::raii::ImageView>& SwapChain::getSwapChainImageViews() { return m_swapChainImageViews; }
+	std::vector<vk::raii::Semaphore>& SwapChain::getRenderingFinishedSemaphores() { return m_renderingFinishedSemaphores; }
+	std::vector<vk::raii::Semaphore>& SwapChain::getPresentCompleteSemaphores() { return m_presentCompleteSemaphores; }
 	vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities,vk::Extent2D extent)
 	{
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
@@ -104,6 +106,19 @@ namespace MiniRendering {
 				}
 			};
 			m_swapChainImageViews.emplace_back(vk::raii::ImageView(device, viewInfo));
+		}
+	}
+	void SwapChain::createRenderingAndPresentSemaphore(const vk::raii::Device& device)
+	{
+		m_presentCompleteSemaphores.clear();
+		m_renderingFinishedSemaphores.clear();
+		for (size_t i = 0;i < m_swapChainImages.size();++i)
+		{
+			m_renderingFinishedSemaphores.emplace_back(device, vk::SemaphoreCreateInfo{});
+		}
+		for (size_t i = 0;i < MAX_FRAME;++i)
+		{
+			m_presentCompleteSemaphores.emplace_back(device, vk::SemaphoreCreateInfo{});
 		}
 	}
 }

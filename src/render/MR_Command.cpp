@@ -6,6 +6,7 @@ namespace MiniRendering {
 	{
 		MR_LOG_INFO("destory command");
 	}
+	std::vector<vk::raii::CommandBuffer>& Command::getCommandBuffers() { return m_CommandBuffers; }
 	void Command::createCommandPool(const DeviceContext& deviceContext,const QueueIndex& queueIndex)
 	{
 		createGraphicsCommandPool(deviceContext.device, queueIndex.graphicsAndPresent->familyIndex);
@@ -19,6 +20,15 @@ namespace MiniRendering {
 			.queueFamilyIndex = graphicsIndex
 		};
 		m_graphicsCommandPool = vk::raii::CommandPool(device, graphicsPoolInfo);
+	}
+	void Command::createCommandBuffers(const vk::raii::Device& device)
+	{
+		vk::CommandBufferAllocateInfo commandAllocInfo{
+			.commandPool = m_graphicsCommandPool,
+			.level = vk::CommandBufferLevel::ePrimary,
+			.commandBufferCount = MAX_FRAME
+		};
+		m_CommandBuffers = vk::raii::CommandBuffers(device, commandAllocInfo);
 	}
 	void Command::createTransferCommandPool(const vk::raii::Device& device, uint32_t transferIndex)
 	{

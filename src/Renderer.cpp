@@ -17,10 +17,13 @@ namespace MiniRendering {
 		MiniRendering::QueueIndex queueIndex = MiniRendering::QueueIndex::find(m_context.getPhysicalDevice(), m_window.getSurface());
 		m_context.createDevice(queueIndex);
 		m_swapChain.createSwapChain(m_context.deviceContext(),m_window.getSurface(),m_window.getFramebufferExtent());
+		m_swapChain.createRenderingAndPresentSemaphore(m_context.getDevice());
 		m_command.createCommandPool(m_context.deviceContext(), queueIndex);
+		m_command.createCommandBuffers(m_context.getDevice());
 		while (!glfwWindowShouldClose(m_window.getWindow()))
 		{
 			glfwPollEvents();
+			m_draw.draw();
 		}
 	}
 } // namespace MiniRendering

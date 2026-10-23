@@ -3,6 +3,8 @@
 #include"core/WindowSystem.h"
 #include"render/SwapChain.h"
 #include"render/MR_Command.h"
+#include"render/MainDraw.h"
+#include"render/PipelineLib.h"
 
 namespace MiniRendering {
 	class Renderer
@@ -18,5 +20,7 @@ namespace MiniRendering {
 		Window m_window;
 		SwapChain m_swapChain;
 		Command m_command;
+		PipelineLib m_pipeline;
+		MainDraw m_draw;
 	};
 }
