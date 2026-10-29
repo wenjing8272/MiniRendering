@@ -18,7 +18,12 @@ namespace MiniRendering {
 		void windowInit(int width, int height);
 		void createSurface(const vk::raii::Instance& instance);
 		std::vector<const char*> getGLFWExtension() const;
-		vk::Extent2D getFramebufferExtent()const;
+		vk::Extent2D getFramebufferExtent();
+		void waitEvents()const;
+		void closeWindowEvent();
+		bool windowShouldClose()const;
+		void pollEvent();
+		bool consumeFrameResize();
 	private:
 		void createWindow();
 		static void framebufferResizedCallback(GLFWwindow* window, int width, int height)
@@ -27,6 +32,7 @@ namespace MiniRendering {
 			if (app != nullptr)app->framebufferResized = true;
 		}
 		GLFWwindow* m_window{ nullptr };
+		bool m_windowInit = false;
 		int m_width{ 0 };
 		int m_height{ 0 };
 		vk::raii::SurfaceKHR m_surface{ nullptr };

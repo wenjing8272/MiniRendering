@@ -1,8 +1,8 @@
 #pragma once
 #include<vulkan/vulkan_raii.hpp>
 #include<vector>
-#include<DeviceContext.h>
-#include<MR_Global.h>
+#include"core/DeviceContext.h"
+#include"render/RenderConfig.h"
 
 namespace MiniRendering {
 
@@ -12,14 +12,15 @@ namespace MiniRendering {
 		~SwapChain();
 		SwapChain(const SwapChain& other) = delete;
 		SwapChain& operator=(const SwapChain& other) = delete;
-		vk::Extent2D& getSwapChainExtent();
-		vk::SurfaceFormatKHR& getSwapChainSurfaceFormat();
-		std::vector<vk::Image>& getSwapChainImages();
-		std::vector<vk::raii::ImageView>& getSwapChainImageViews();
-		std::vector<vk::raii::Semaphore>& getRenderingFinishedSemaphores();
-		std::vector<vk::raii::Semaphore>& getPresentCompleteSemaphores();
-		void createSwapChain(const DeviceContext& deviceContext,const vk::raii::SurfaceKHR& surface, vk::Extent2D extent);
-		void createRenderingAndPresentSemaphore(const vk::raii::Device& device);
+		const vk::raii::SwapchainKHR& getSwapChain()const;
+		const vk::Extent2D& getSwapChainExtent()const;
+		const vk::SurfaceFormatKHR& getSwapChainSurfaceFormat()const;
+		const std::vector<vk::Image>& getSwapChainImages()const;
+		const std::vector<vk::raii::ImageView>& getSwapChainImageViews()const;
+		const std::vector<vk::raii::Semaphore>& getRenderingFinishedSemaphores()const;
+		void createSwapChain(const DeviceContext& deviceContext,const vk::raii::SurfaceKHR& surface, vk::Extent2D extent,vk::raii::SwapchainKHR oldSwapChain = nullptr);
+		void createRenderingSemaphore(const vk::raii::Device& device);
+		void recreateSwapChain(const DeviceContext& deviceContext,const vk::raii::SurfaceKHR& surface,vk::Extent2D extent);
 	private:
 		vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities,vk::Extent2D extent);
 		uint32_t swapMinImageCount(const vk::SurfaceCapabilitiesKHR& capabilities);
@@ -31,7 +32,6 @@ namespace MiniRendering {
 		vk::SurfaceFormatKHR m_swapChainSurfaceFormat;
 		std::vector<vk::Image> m_swapChainImages;
 		std::vector<vk::raii::ImageView> m_swapChainImageViews;
-		std::vector<vk::raii::Semaphore> m_presentCompleteSemaphores;
 		std::vector<vk::raii::Semaphore> m_renderingFinishedSemaphores;
 	};
 }

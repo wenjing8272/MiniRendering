@@ -1,9 +1,9 @@
 #pragma once
 #include<vulkan/vulkan_raii.hpp>
-#include<QueueIndex.h>
-#include<DeviceContext.h>
+#include"core/QueueIndex.h"
+#include"core/DeviceContext.h"
 #include<vector>
-#include<MR_Global.h>
+#include"render/RenderConfig.h"
 
 namespace MiniRendering {
 
@@ -13,7 +13,7 @@ namespace MiniRendering {
 		~Command();
 		Command(const Command& other) = delete;
 		Command& operator=(const Command& other) = delete;
-		std::vector<vk::raii::CommandBuffer>& getCommandBuffers();
+		const std::vector<vk::raii::CommandBuffer>& getCommandBuffers()const;
 		void createCommandPool(const DeviceContext& deviceContext, const QueueIndex& queueIndex);
 		void createCommandBuffers(const vk::raii::Device& device);
 	private:

@@ -3,10 +3,10 @@
 #include<vk_mem_alloc.h>
 #include<vector>
 #include<optional>
-#include"Debug.h"
-#include"QueueIndex.h"
-#include"Validation.h"
-#include"DeviceContext.h"
+#include"core/Debug.h"
+#include"core/QueueIndex.h"
+#include"core/Validation.h"
+#include"core/DeviceContext.h"
 
 namespace MiniRendering {
 

@@ -1,12 +1,12 @@
-#include"MR_Command.h"
-#include<Logger.h>
+#include"render/command/MR_Command.h"
+#include"utils/Logger.h"
 
 namespace MiniRendering {
 	Command::~Command()
 	{
 		MR_LOG_INFO("destory command");
 	}
-	std::vector<vk::raii::CommandBuffer>& Command::getCommandBuffers() { return m_CommandBuffers; }
+	const std::vector<vk::raii::CommandBuffer>& Command::getCommandBuffers() const{ return m_CommandBuffers; }
 	void Command::createCommandPool(const DeviceContext& deviceContext,const QueueIndex& queueIndex)
 	{
 		createGraphicsCommandPool(deviceContext.device, queueIndex.graphicsAndPresent->familyIndex);
@@ -44,5 +44,6 @@ namespace MiniRendering {
 			.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
 			.queueFamilyIndex = computeIndex
 		};
+		m_computeCommandPool = vk::raii::CommandPool(device, computePoolInfo);
 	}
 }

@@ -1,17 +1,18 @@
-#include"SwapChain.h"
-#include<Logger.h>
+#include"render/swapchain/SwapChain.h"
+#include"utils/Logger.h"
 
 namespace MiniRendering {
 	SwapChain::~SwapChain()
 	{
+
 		MR_LOG_INFO("destory swapchain");
 	}
-	vk::Extent2D& SwapChain::getSwapChainExtent() { return m_swapChainExtent; }
-	vk::SurfaceFormatKHR& SwapChain::getSwapChainSurfaceFormat() { return m_swapChainSurfaceFormat; }
-	std::vector<vk::Image>& SwapChain::getSwapChainImages() { return m_swapChainImages; }
-	std::vector<vk::raii::ImageView>& SwapChain::getSwapChainImageViews() { return m_swapChainImageViews; }
-	std::vector<vk::raii::Semaphore>& SwapChain::getRenderingFinishedSemaphores() { return m_renderingFinishedSemaphores; }
-	std::vector<vk::raii::Semaphore>& SwapChain::getPresentCompleteSemaphores() { return m_presentCompleteSemaphores; }
+	const vk::raii::SwapchainKHR& SwapChain::getSwapChain()const { return m_swapChain; }
+	const vk::Extent2D& SwapChain::getSwapChainExtent() const{ return m_swapChainExtent; }
+	const vk::SurfaceFormatKHR& SwapChain::getSwapChainSurfaceFormat() const{ return m_swapChainSurfaceFormat; }
+	const std::vector<vk::Image>& SwapChain::getSwapChainImages() const{ return m_swapChainImages; }
+	const std::vector<vk::raii::ImageView>& SwapChain::getSwapChainImageViews() const{ return m_swapChainImageViews; }
+	const std::vector<vk::raii::Semaphore>& SwapChain::getRenderingFinishedSemaphores() const{ return m_renderingFinishedSemaphores; }
 	vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities,vk::Extent2D extent)
 	{
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
@@ -54,7 +55,7 @@ namespace MiniRendering {
 			vk::PresentModeKHR::eMailbox :
 			vk::PresentModeKHR::eFifo;
 	}
-	void SwapChain::createSwapChain(const DeviceContext& deviceContext, const vk::raii::SurfaceKHR& surface,vk::Extent2D extent)
+	void SwapChain::createSwapChain(const DeviceContext& deviceContext, const vk::raii::SurfaceKHR& surface,vk::Extent2D extent,vk::raii::SwapchainKHR oldSwapChain)
 	{
 		MR_LOG_INFO("create swap chain");
 		auto surfaceCapabilities = deviceContext.physicalDevice.getSurfaceCapabilitiesKHR(*surface);
@@ -78,7 +79,8 @@ namespace MiniRendering {
 			.preTransform = surfaceCapabilities.currentTransform,
 			.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
 			.presentMode = presentMode,
-			.clipped = true
+			.clipped = true,
+			.oldSwapchain = oldSwapChain
 		};
 		m_swapChain = vk::raii::SwapchainKHR(deviceContext.device, swapChainCreateInfo);
 		m_swapChainImages = m_swapChain.getImages();  //取出交换链的图片
@@ -108,17 +110,19 @@ namespace MiniRendering {
 			m_swapChainImageViews.emplace_back(vk::raii::ImageView(device, viewInfo));
 		}
 	}
-	void SwapChain::createRenderingAndPresentSemaphore(const vk::raii::Device& device)
+	void SwapChain::createRenderingSemaphore(const vk::raii::Device& device)
 	{
-		m_presentCompleteSemaphores.clear();
 		m_renderingFinishedSemaphores.clear();
 		for (size_t i = 0;i < m_swapChainImages.size();++i)
 		{
 			m_renderingFinishedSemaphores.emplace_back(device, vk::SemaphoreCreateInfo{});
 		}
-		for (size_t i = 0;i < MAX_FRAME;++i)
-		{
-			m_presentCompleteSemaphores.emplace_back(device, vk::SemaphoreCreateInfo{});
-		}
+	}
+	void SwapChain::recreateSwapChain(const DeviceContext& deviceContext, const vk::raii::SurfaceKHR& surface, vk::Extent2D extent)
+	{
+		MR_LOG_WARN("recreate swap chain");
+		m_swapChainImageViews.clear();
+		createSwapChain(deviceContext, surface, extent,std::move(m_swapChain));
+		createRenderingSemaphore(deviceContext.device);
 	}
 }

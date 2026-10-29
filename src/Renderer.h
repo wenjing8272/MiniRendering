@@ -1,10 +1,14 @@
 #pragma once
+#include"render/RenderConfig.h"
 #include"core/Context.h"
 #include"core/WindowSystem.h"
-#include"render/SwapChain.h"
-#include"render/MR_Command.h"
-#include"render/MainDraw.h"
-#include"render/PipelineLib.h"
+#include"render/swapchain/SwapChain.h"
+#include"render/command/MR_Command.h"
+#include"render/passes/MainDraw.h"
+#include"render/pipeline/PipelineLib.h"
+#include"render/sync/FrameSynchronize.h"
+#include"render/sync/FrameResource.h"
+#include<array>
 
 namespace MiniRendering {
 	class Renderer
@@ -20,7 +24,9 @@ namespace MiniRendering {
 		Window m_window;
 		SwapChain m_swapChain;
 		Command m_command;
-		PipelineLib m_pipeline;
+		PipelineLib m_pipelineLib;
 		MainDraw m_draw;
+		FrameSynchronize m_frameSynchronize;
+		bool m_swapChainDirty = false;
 	};
 }

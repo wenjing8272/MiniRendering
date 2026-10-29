@@ -1,5 +1,5 @@
-#include"Context.h"
-#include<Logger.h>
+#include"core/Context.h"
+#include"utils/Logger.h"
 #include<array>
 
 namespace MiniRendering {
@@ -20,6 +20,7 @@ namespace MiniRendering {
 	void Context::initInstance(std::vector<const char*>& instanceExtensions)
 	{
 		this->instanceExtensions = instanceExtensions;
+		VULKAN_HPP_DEFAULT_DISPATCHER.init();
 		createInstance();
 	}
 
@@ -71,6 +72,7 @@ namespace MiniRendering {
 			.ppEnabledExtensionNames = instanceExtensions.data()
 		};
 		m_instance = vk::raii::Instance(m_context, instanceCreateInfo);
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(*m_instance);
 #ifndef NDEBUG
 		m_debug.setupDebugMessenger(m_instance);
 #endif 
@@ -122,6 +124,7 @@ namespace MiniRendering {
 		bool supportsRequiredFeatures = features.get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy &&
 										features.get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
 										features.get<vk::PhysicalDeviceVulkan12Features>().runtimeDescriptorArray &&
+										features.get<vk::PhysicalDeviceVulkan12Features>().timelineSemaphore&&
 										features.get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
 										features.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
 										features.get<vk::PhysicalDeviceVulkan13Features>().synchronization2;
@@ -138,7 +141,7 @@ namespace MiniRendering {
 			featureChain = {
 				{.features = {.samplerAnisotropy = true}},
 				{.shaderDrawParameters = true},
-				{.runtimeDescriptorArray = true},
+				{.runtimeDescriptorArray = true,.timelineSemaphore = true},
 				{.synchronization2 = true,.dynamicRendering = true},
 				{.extendedDynamicState = true}
 		};
@@ -167,6 +170,7 @@ namespace MiniRendering {
 			.ppEnabledExtensionNames = requiredDeviceExtensions.data()
 		};
 		m_device = vk::raii::Device(m_physicalDevice, deviceCreateInfo);
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(*m_device);
 		m_graphicsQueueAndPresent = vk::raii::Queue(m_device, queueIndex.graphicsAndPresent->familyIndex, queueIndex.graphicsAndPresent->queueIndex);
 		m_transferQueue = vk::raii::Queue(m_device, queueIndex.transfer->familyIndex, queueIndex.transfer->queueIndex);
 		m_computeQueue = vk::raii::Queue(m_device, queueIndex.compute->familyIndex, queueIndex.compute->queueIndex);

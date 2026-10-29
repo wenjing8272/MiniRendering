@@ -15,18 +15,21 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Vulkan REQUIRED)
 add_subdirectory(third_party/glm)
 add_library(commonCompileConfigure INTERFACE)
+# 源码根目录：所有项目内 include 都以此为准（如 "core/Context.h"）
+target_include_directories(commonCompileConfigure INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 target_compile_definitions(commonCompileConfigure INTERFACE
     VULKAN_HPP_NO_STRUCT_CONSTRUCTORS=1             # 禁用 vulkan-hpp 聚合初始化
     VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1        # vulkan-hpp 用动态加载
-    TINYGLTF_NO_STB_IMAGE                             
+    TINYGLTF_NO_STB_IMAGE
     TINYGLTF_NO_STB_IMAGE_WRITE             #  禁用tinygltf内置的 stb_Image
     $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG>
     $<$<CONFIG:Release>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_WARN>      # 编译期级别：Debug 全开，Release 只留 warn/error
+    VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS=1
 )
 # stb
 add_library(stb STATIC third_party/stb/stb_image.cpp)
-target_include_directories(stb PUBLIC third_party/stb) 
+target_include_directories(stb PUBLIC third_party/stb)
 # tinyglTFLoader
 add_library(tinygltf STATIC third_party/tinyglTFloader/tiny_gltf.cpp)
 target_include_directories(tinygltf PUBLIC third_party/tinyglTFloader)
@@ -39,41 +42,40 @@ target_link_libraries(VMA PUBLIC commonCompileConfigure Vulkan::Vulkan)
 # GLFW（窗口 + surface）
 set(GLFW_LIB "${CMAKE_CURRENT_SOURCE_DIR}/third_party/GLFW/glfw-3.5.1.bin.WIN64/lib-vc2022/glfw3.lib")
 # core源代码添加到此项目的可执行文件。
-add_library(core STATIC 
+add_library(core STATIC
     src/core/Context.cpp
-    src/core/WindowSystem.cpp 
-    src/core/Context.cpp
+    src/core/WindowSystem.cpp
     src/core/QueueIndex.h
     src/core/Debug.cpp
     src/core/DeviceContext.h
-    src/core/MR_Global.h
 )
-target_include_directories(core PUBLIC src/core)
 target_link_libraries(core PUBLIC commonCompileConfigure Vulkan::Vulkan ${GLFW_LIB} VMA)
 target_include_directories(core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third_party/GLFW/glfw-3.5.1.bin.WIN64/include")
 # resources源代码
 add_library(resources STATIC
     src/resources/Buffer.cpp
 )
-target_include_directories(resources PUBLIC src/resources)
 target_link_libraries(resources PUBLIC core glm::glm stb)
 target_include_directories(resources PUBLIC third_party/glm)
 
 # scene源码
-add_library(scene STATIC 
-    src/scene/ModelLoader.cpp
+add_library(scene STATIC
+    src/scene/Scene.cpp
 )
-target_include_directories(scene PUBLIC src/scene)
 target_link_libraries(scene PUBLIC resources tinygltf)
 
 # render源码
 add_library(render STATIC
-    src/render/SwapChain.cpp
-    src/render/MR_Command.cpp
-    src/render/MainDraw.cpp
-    src/render/PipelineLib.cpp
+    src/render/Barrier.cpp
+    src/render/Barrier.h
+    src/render/RenderConfig.h
+    src/render/swapchain/SwapChain.cpp
+    src/render/command/MR_Command.cpp
+    src/render/passes/MainDraw.cpp
+    src/render/pipeline/PipelineLib.cpp
+    src/render/sync/FrameResource.h
+    src/render/sync/FrameSynchronize.cpp
 )
-target_include_directories(render PUBLIC src/render)
 target_link_libraries(render PUBLIC resources)
 
 # 拉取 spdlog
@@ -86,9 +88,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(spdlog)
 # utils：通用工具（日志封装）
 add_library(utils STATIC
-    UTILS/Logger.cpp
+    src/utils/Logger.cpp
 )
-target_include_directories(utils PUBLIC UTILS)
+target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(utils PUBLIC spdlog::spdlog)
 target_link_libraries(commonCompileConfigure INTERFACE utils)
 

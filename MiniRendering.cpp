@@ -1,7 +1,11 @@
 ﻿// MiniRendering.cpp: 定义应用程序的入口点。
 //
-#include"src/Renderer.h"
-#include"UTILS/Logger.h"
+#include"Renderer.h"
+#include"utils/Logger.h"
+
+//项目在CMake配置为动态链接需要初始化函数表
+//初始化全局函数配置基础函数指针
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 struct LogGuard
 {

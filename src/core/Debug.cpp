@@ -1,5 +1,5 @@
-#include"Debug.h"
-#include<Logger.h>
+#include"core/Debug.h"
+#include"utils/Logger.h"
 
 namespace MiniRendering {
 	Debug::~Debug(){}

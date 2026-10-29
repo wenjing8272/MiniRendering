@@ -1,8 +1,8 @@
 #pragma once
 #include<vulkan/vulkan_raii.hpp>
 #include<string>
-#include<Logger.h>
-#include"Validation.h"
+#include"utils/Logger.h"
+#include"core/Validation.h"
 
 namespace MiniRendering {
 	
